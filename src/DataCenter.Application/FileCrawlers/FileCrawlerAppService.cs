@@ -26,6 +26,18 @@ namespace DataCenter.FileCrawlers
             FileCrawlerRecordDomainService = fileCrawlerRecordDomainService;
         }
 
+        public async Task<List<FileCrawlerDto>> GetListAsync()
+        {
+            List<FileCrawler> list = await FileCrawlerRepository.GetListAsync();
+            return ObjectMapper.Map<List<FileCrawler>, List<FileCrawlerDto>>(list);
+        }
+
+        public async Task<FileCrawlerDto> GetAsync(GetFileCrawlerDto input)
+        {
+            FileCrawler fileCrawler = await FileCrawlerRepository.GetAsync(x => x.Code == input.FileCrawlerCode);
+            return ObjectMapper.Map<FileCrawler, FileCrawlerDto>(fileCrawler);
+        }
+
         public async Task FileCrawlerRecordInsertAsync(FileCrawlerRecordInsertDto input)
         {
             FileCrawler fileCrawler = await FileCrawlerRepository.GetAsync(x => x.Code == input.FileCrawlerCode);
