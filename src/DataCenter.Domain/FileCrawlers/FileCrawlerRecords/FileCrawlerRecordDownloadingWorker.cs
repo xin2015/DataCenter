@@ -23,7 +23,7 @@ namespace DataCenter.FileCrawlers.FileCrawlerRecords
             Logger.LogDebug("Starting: {0}", GetType());
 
             IClock clock = workerContext.ServiceProvider.GetRequiredService<IClock>();
-            if (clock.Now.Hour == 1 && clock.Now.Minute == 23)
+            if (clock.Now.Hour == 0 && clock.Now.Minute == 3)
             {
                 Logger.LogInformation("Starting: {0}", GetType());
                 IFileCrawlerRepository fileCrawlerRepository = workerContext.ServiceProvider.GetRequiredService<IFileCrawlerRepository>();

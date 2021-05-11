@@ -85,6 +85,8 @@ namespace DataCenter.Web
             ConfigureNavigationServices();
             ConfigureAutoApiControllers();
             ConfigureSwaggerServices(context.Services);
+
+            //ConfigureCookiePolicyServices();
         }
 
         private void ConfigureUrls(IConfiguration configuration)
@@ -191,6 +193,14 @@ namespace DataCenter.Web
             );
         }
 
+        private void ConfigureCookiePolicyServices()
+        {
+            Configure<CookiePolicyOptions>(options =>
+            {
+                options.MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+            });
+        }
+
         public override void OnApplicationInitialization(ApplicationInitializationContext context)
         {
             var app = context.GetApplicationBuilder();
@@ -200,6 +210,8 @@ namespace DataCenter.Web
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            //app.UseCookiePolicy();
 
             app.UseAbpRequestLocalization();
 

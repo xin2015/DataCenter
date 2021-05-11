@@ -14,5 +14,11 @@ namespace DataCenter.FileCrawlers.FileCrawlerRecords
         public EfCoreFileCrawlerRecordRepository(IDbContextProvider<DataCenterDbContext> dbContextProvider) : base(dbContextProvider)
         {
         }
+
+        public async Task<List<FileCrawlerRecord>> GetListAsync(Guid parameterCombinationId, DateTime date)
+        {
+            DateTime nextDate = date.AddDays(1);
+            return await GetListAsync(x => x.ParameterCombinationId == parameterCombinationId && x.SourceTime >= date && x.SourceTime < nextDate);
+        }
     }
 }

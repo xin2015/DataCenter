@@ -103,5 +103,46 @@ namespace DataCenter.FileCrawlers.ParameterCombinations
             }
             return list;
         }
+
+        public async Task UpdateAsync(FileCrawler fileCrawler)
+        {
+            List<ParameterCombination> parameterCombinationList = await ParameterCombinationRepository.GetListAsync(fileCrawler.Id);
+            parameterCombinationList.ForEach(x => x.Enabled = false);
+            List<Dictionary<string, string>> list = GetParameterCombinations(fileCrawler);
+            foreach (Dictionary<string, string> dic in list)
+            {
+                string periods;
+                if (dic.ContainsKey("Periods"))
+                {
+                    periods = dic["Periods"];
+                    dic.Remove("Periods");
+                }
+                else
+                {
+                    periods = fileCrawler.Periods;
+                }
+                ParameterCombination parameterCombination = parameterCombinationList.FirstOrDefault(x => SequenceEqual(x, dic));
+                if (parameterCombination == null)
+                {
+                    parameterCombination = new ParameterCombination(GuidGenerator.Create(), fileCrawler.Id);
+                    parameterCombination.Periods = periods;
+                    parameterCombination.Parameters = JsonSerializer.Serialize(dic);
+                    parameterCombination.Enabled = true;
+                    await ParameterCombinationRepository.InsertAsync(parameterCombination);
+                }
+                else
+                {
+                    parameterCombination.Periods = periods;
+                    parameterCombination.Enabled = true;
+                }
+            }
+            await ParameterCombinationRepository.UpdateManyAsync(parameterCombinationList);
+        }
+
+        protected bool SequenceEqual(ParameterCombination parameterCombination, Dictionary<string, string> dic)
+        {
+            Dictionary<string, string> parameters = JsonSerializer.Deserialize<Dictionary<string, string>>(parameterCombination.Parameters);
+            return parameters.SequenceEqual(dic);
+        }
     }
 }

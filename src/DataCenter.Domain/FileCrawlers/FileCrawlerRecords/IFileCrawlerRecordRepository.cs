@@ -9,5 +9,6 @@ namespace DataCenter.FileCrawlers.FileCrawlerRecords
 {
     public interface IFileCrawlerRecordRepository : IRepository<FileCrawlerRecord, Guid>
     {
+        Task<List<FileCrawlerRecord>> GetListAsync(Guid parameterCombinationId, DateTime date);
     }
 }

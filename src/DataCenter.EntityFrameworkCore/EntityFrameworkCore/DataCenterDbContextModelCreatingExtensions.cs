@@ -20,13 +20,13 @@ namespace DataCenter.EntityFrameworkCore
                 b.ToTable(DataCenterConsts.DbTablePrefix + "FileCrawlers", DataCenterConsts.DbSchema);
                 b.ConfigureByConvention(); //auto configure for the base class props
 
-                b.Property(x => x.Code).IsRequired().HasMaxLength(DataCenterConsts.MaxCodeLength);
-                b.Property(x => x.Name).IsRequired().HasMaxLength(DataCenterConsts.MaxNameLength);
-                b.Property(x => x.UrlFormat).IsRequired().HasMaxLength(DataCenterConsts.MaxFullNameLength);
-                b.Property(x => x.FileNameFormat).IsRequired().HasMaxLength(DataCenterConsts.MaxNameLength);
-                b.Property(x => x.StampFormat).IsRequired().HasMaxLength(DataCenterConsts.MaxNameLength);
-                b.Property(x => x.Periods).IsRequired().HasMaxLength(DataCenterConsts.MaxJsonStringLength);
-                b.Property(x => x.Parameters).IsRequired().HasMaxLength(DataCenterConsts.MaxFullJsonStringLength);
+                b.Property(x => x.Code).IsRequired().HasMaxLength(DataCenterSharedConsts.MaxCodeLength);
+                b.Property(x => x.Name).IsRequired().HasMaxLength(DataCenterSharedConsts.MaxNameLength);
+                b.Property(x => x.UrlFormat).IsRequired().HasMaxLength(DataCenterSharedConsts.MaxFullNameLength);
+                b.Property(x => x.FileNameFormat).IsRequired().HasMaxLength(DataCenterSharedConsts.MaxNameLength);
+                b.Property(x => x.StampFormat).IsRequired().HasMaxLength(DataCenterSharedConsts.MaxNameLength);
+                b.Property(x => x.Periods).IsRequired().HasMaxLength(DataCenterSharedConsts.MaxJsonStringLength);
+                b.Property(x => x.Parameters).IsRequired().HasMaxLength(DataCenterSharedConsts.MaxFullJsonStringLength);
             });
 
             builder.Entity<ParameterCombination>(b =>
@@ -34,8 +34,8 @@ namespace DataCenter.EntityFrameworkCore
                 b.ToTable(DataCenterConsts.DbTablePrefix + "ParameterCombinations", DataCenterConsts.DbSchema);
                 b.ConfigureByConvention(); //auto configure for the base class props
 
-                b.Property(x => x.Periods).IsRequired().HasMaxLength(DataCenterConsts.MaxJsonStringLength);
-                b.Property(x => x.Parameters).IsRequired().HasMaxLength(DataCenterConsts.MaxJsonStringLength);
+                b.Property(x => x.Periods).IsRequired().HasMaxLength(DataCenterSharedConsts.MaxJsonStringLength);
+                b.Property(x => x.Parameters).IsRequired().HasMaxLength(DataCenterSharedConsts.MaxJsonStringLength);
 
                 b.HasOne<FileCrawler>().WithMany().HasForeignKey(x => x.FileCrawlerId).IsRequired();
             });
@@ -45,10 +45,10 @@ namespace DataCenter.EntityFrameworkCore
                 b.ToTable(DataCenterConsts.DbTablePrefix + "FileCrawlerRecords", DataCenterConsts.DbSchema);
                 b.ConfigureByConvention(); //auto configure for the base class props
 
-                b.Property(x => x.Url).IsRequired().HasMaxLength(DataCenterConsts.MaxFullNameLength);
-                b.Property(x => x.DirectoryName).IsRequired().HasMaxLength(DataCenterConsts.MaxNameLength);
-                b.Property(x => x.FileName).IsRequired().HasMaxLength(DataCenterConsts.MaxNameLength);
-                b.Property(x => x.Stamp).IsRequired().HasMaxLength(DataCenterConsts.MaxNameLength);
+                b.Property(x => x.Url).IsRequired().HasMaxLength(DataCenterSharedConsts.MaxFullNameLength);
+                b.Property(x => x.DirectoryName).IsRequired().HasMaxLength(DataCenterSharedConsts.MaxNameLength);
+                b.Property(x => x.FileName).IsRequired().HasMaxLength(DataCenterSharedConsts.MaxNameLength);
+                b.Property(x => x.Stamp).IsRequired().HasMaxLength(DataCenterSharedConsts.MaxNameLength);
 
                 b.HasOne<ParameterCombination>().WithMany().HasForeignKey(x => x.ParameterCombinationId).IsRequired();
             });

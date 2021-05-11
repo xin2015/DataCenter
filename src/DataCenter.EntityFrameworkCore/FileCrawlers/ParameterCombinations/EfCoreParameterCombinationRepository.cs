@@ -15,6 +15,11 @@ namespace DataCenter.FileCrawlers.ParameterCombinations
         {
         }
 
+        public async Task<List<ParameterCombination>> GetListAsync(Guid fileCrawlerId)
+        {
+            return await GetListAsync(x => x.FileCrawlerId == fileCrawlerId);
+        }
+
         public async Task<List<ParameterCombination>> GetListAsync(Guid fileCrawlerId, bool enabled)
         {
             return await GetListAsync(x => x.FileCrawlerId == fileCrawlerId && x.Enabled == enabled);

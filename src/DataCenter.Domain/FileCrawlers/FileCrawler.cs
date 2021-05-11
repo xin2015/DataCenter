@@ -33,12 +33,12 @@ namespace DataCenter.FileCrawlers
 
         public virtual void SetCode([NotNull] string code)
         {
-            Code = Check.NotNullOrWhiteSpace(code, nameof(code), DataCenterConsts.MaxCodeLength);
+            Code = Check.NotNullOrWhiteSpace(code, nameof(code), DataCenterSharedConsts.MaxCodeLength);
         }
 
         public virtual void SetName([NotNull] string name)
         {
-            Name = Check.NotNullOrWhiteSpace(name, nameof(name), DataCenterConsts.MaxNameLength);
+            Name = Check.NotNullOrWhiteSpace(name, nameof(name), DataCenterSharedConsts.MaxNameLength);
         }
     }
 }

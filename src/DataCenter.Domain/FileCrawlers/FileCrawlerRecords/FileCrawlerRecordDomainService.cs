@@ -37,89 +37,123 @@ namespace DataCenter.FileCrawlers.FileCrawlerRecords
             List<ParameterCombination> parameterCombinations = await ParameterCombinationRepository.GetListAsync(fileCrawler.Id, true);
             foreach (ParameterCombination parameterCombination in parameterCombinations)
             {
-                Dictionary<string, object> dic = JsonSerializer.Deserialize<Dictionary<string, object>>(parameterCombination.Parameters);
-                List<FileCrawlerPeriod> periods = JsonSerializer.Deserialize<List<FileCrawlerPeriod>>(parameterCombination.Periods);
-                if (fileCrawler.Type == FileCrawlerType.Archive)
+                List<FileCrawlerRecord> list = CreateFileCrawlerRecordList(fileCrawler, date, parameterCombination);
+                await FileCrawlerRecordRepository.InsertManyAsync(list);
+                list.ForEach(async x => await EnqueueAsync(x.Id, x.SourceTime, fileCrawler.DelaySeconds));
+            }
+        }
+
+        protected List<FileCrawlerRecord> CreateFileCrawlerRecordList(FileCrawler fileCrawler, DateTime date, ParameterCombination parameterCombination)
+        {
+            List<FileCrawlerRecord> list = new List<FileCrawlerRecord>();
+            Dictionary<string, object> dic = JsonSerializer.Deserialize<Dictionary<string, object>>(parameterCombination.Parameters);
+            List<FileCrawlerPeriod> periods = JsonSerializer.Deserialize<List<FileCrawlerPeriod>>(parameterCombination.Periods);
+            if (fileCrawler.Type == FileCrawlerType.Archive)
+            {
+                foreach (FileCrawlerPeriod period in periods)
                 {
-                    foreach (FileCrawlerPeriod period in periods)
+                    Func<DateTime, int, DateTime> getTimeFunc = GetGetTimeFunc(period.Type);
+                    Func<TimeSpan, int> getOffsetFunc = GetGetOffsetFunc(period.Type);
+                    for (int i = period.Start; i <= period.End; i += period.Interval)
                     {
-                        Func<DateTime, int, DateTime> getTimeFunc = GetGetTimeFunc(period.Type);
-                        Func<TimeSpan, int> getOffsetFunc = GetGetOffsetFunc(period.Type);
-                        for (int i = period.Start; i <= period.End; i += period.Interval)
+                        DateTime sourceTime = getTimeFunc(date, i);
+                        dic["SourceTime"] = sourceTime;
+                        dic["SourceTimeSpan"] = sourceTime - date;
+                        dic["SourceTimeOffset"] = i;
+                        object[] args = dic.Values.ToArray();
+                        object[] urlArgs;
+                        if (fileCrawler.UrlDateTimeKind == DateTimeKind.Utc)
                         {
-                            DateTime sourceTime = getTimeFunc(date, i);
-                            dic["SourceTime"] = sourceTime;
-                            dic["SourceTimeSpan"] = sourceTime - date;
-                            dic["SourceTimeOffset"] = i;
-                            object[] args = dic.Values.ToArray();
-                            object[] urlArgs;
-                            if (fileCrawler.UrlDateTimeKind == DateTimeKind.Utc)
-                            {
-                                DateTime sourceTimeUtc = sourceTime.ToUniversalTime();
-                                dic["SourceTime"] = sourceTimeUtc;
-                                dic["SourceTimeSpan"] = sourceTimeUtc - sourceTimeUtc.Date;
-                                dic["SourceTimeOffset"] = getOffsetFunc(sourceTimeUtc - sourceTimeUtc.Date);
-                                urlArgs = dic.Values.ToArray();
-                            }
-                            else
-                            {
-                                urlArgs = args;
-                            }
-                            FileCrawlerRecord record = new FileCrawlerRecord(GuidGenerator.Create(), parameterCombination.Id, sourceTime, sourceTime)
-                            {
-                                Url = string.Format(fileCrawler.UrlFormat, urlArgs),
-                                DirectoryName = string.Format("{0}\\{1:yyyyMMdd}", Configuration["Settings:Crawlers.Files.RootDirectory"], sourceTime),
-                                FileName = string.Format(fileCrawler.FileNameFormat, args),
-                                Stamp = string.Format(fileCrawler.StampFormat, args)
-                            };
-                            await FileCrawlerRecordRepository.InsertAsync(record);
-                            await EnqueueAsync(record.Id, sourceTime, fileCrawler.DelaySeconds);
+                            DateTime sourceTimeUtc = sourceTime.ToUniversalTime();
+                            dic["SourceTime"] = sourceTimeUtc;
+                            dic["SourceTimeSpan"] = sourceTimeUtc - sourceTimeUtc.Date;
+                            dic["SourceTimeOffset"] = getOffsetFunc(sourceTimeUtc - sourceTimeUtc.Date);
+                            urlArgs = dic.Values.ToArray();
                         }
+                        else
+                        {
+                            urlArgs = args;
+                        }
+                        FileCrawlerRecord record = new FileCrawlerRecord(GuidGenerator.Create(), parameterCombination.Id, sourceTime, sourceTime)
+                        {
+                            Url = string.Format(fileCrawler.UrlFormat, urlArgs),
+                            DirectoryName = string.Format("{0}\\{1:yyyyMMdd}", Configuration["Settings:Crawlers.Files.RootDirectory"], sourceTime),
+                            FileName = string.Format(fileCrawler.FileNameFormat, args),
+                            Stamp = string.Format(fileCrawler.StampFormat, args)
+                        };
+                        list.Add(record);
                     }
                 }
-                else
+            }
+            else
+            {
+                int sourceTimeOffset = int.Parse(dic["TimeOffset"] as string);
+                DateTime sourceTime = date.AddHours(sourceTimeOffset);
+                dic["SourceTime"] = sourceTime;
+                dic["SourceTimeSpan"] = sourceTime - date;
+                dic["SourceTimeOffset"] = sourceTimeOffset;
+                foreach (FileCrawlerPeriod period in periods)
                 {
-                    int sourceTimeOffset = int.Parse(dic["TimeOffset"] as string);
-                    DateTime sourceTime = date.AddHours(sourceTimeOffset);
-                    dic["SourceTime"] = sourceTime;
-                    dic["SourceTimeSpan"] = sourceTime - date;
-                    dic["SourceTimeOffset"] = sourceTimeOffset;
-                    foreach (FileCrawlerPeriod period in periods)
+                    Func<DateTime, int, DateTime> getTimeFunc = GetGetTimeFunc(period.Type);
+                    for (int i = period.Start; i <= period.End; i += period.Interval)
                     {
-                        Func<DateTime, int, DateTime> getTimeFunc = GetGetTimeFunc(period.Type);
-                        for (int i = period.Start; i <= period.End; i += period.Interval)
+                        DateTime targetTime = getTimeFunc(sourceTime, i);
+                        dic["TargetTime"] = targetTime;
+                        dic["TargetTimeSpan"] = targetTime - sourceTime;
+                        dic["TargetTimeOffset"] = i;
+                        object[] args = dic.Values.ToArray();
+                        object[] urlArgs;
+                        if (fileCrawler.UrlDateTimeKind == DateTimeKind.Utc)
                         {
-                            DateTime targetTime = getTimeFunc(sourceTime, i);
-                            dic["TargetTime"] = targetTime;
-                            dic["TargetTimeSpan"] = targetTime - sourceTime;
-                            dic["TargetTimeOffset"] = i;
-                            object[] args = dic.Values.ToArray();
-                            object[] urlArgs;
-                            if (fileCrawler.UrlDateTimeKind == DateTimeKind.Utc)
-                            {
-                                DateTime sourceTimeUtc = sourceTime.ToUniversalTime();
-                                DateTime targetTimeUtc = targetTime.ToUniversalTime();
-                                dic["SourceTime"] = sourceTimeUtc;
-                                dic["SourceTimeSpan"] = sourceTimeUtc - sourceTimeUtc.Date;
-                                dic["SourceTimeOffset"] = (sourceTimeUtc - sourceTimeUtc.Date).Hours;
-                                dic["TargetTime"] = targetTimeUtc;
-                                urlArgs = dic.Values.ToArray();
-                            }
-                            else
-                            {
-                                urlArgs = args;
-                            }
-                            FileCrawlerRecord record = new FileCrawlerRecord(GuidGenerator.Create(), parameterCombination.Id, sourceTime, targetTime)
-                            {
-                                Url = string.Format(fileCrawler.UrlFormat, urlArgs),
-                                DirectoryName = string.Format("{0}\\{1:yyyyMMdd}", Configuration["Settings:Crawlers.Files.RootDirectory"], sourceTime),
-                                FileName = string.Format(fileCrawler.FileNameFormat, args),
-                                Stamp = string.Format(fileCrawler.StampFormat, args)
-                            };
-                            await FileCrawlerRecordRepository.InsertAsync(record);
-                            await EnqueueAsync(record.Id, sourceTime, fileCrawler.DelaySeconds);
+                            DateTime sourceTimeUtc = sourceTime.ToUniversalTime();
+                            DateTime targetTimeUtc = targetTime.ToUniversalTime();
+                            dic["SourceTime"] = sourceTimeUtc;
+                            dic["SourceTimeSpan"] = sourceTimeUtc - sourceTimeUtc.Date;
+                            dic["SourceTimeOffset"] = (sourceTimeUtc - sourceTimeUtc.Date).Hours;
+                            dic["TargetTime"] = targetTimeUtc;
+                            urlArgs = dic.Values.ToArray();
                         }
+                        else
+                        {
+                            urlArgs = args;
+                        }
+                        FileCrawlerRecord record = new FileCrawlerRecord(GuidGenerator.Create(), parameterCombination.Id, sourceTime, targetTime)
+                        {
+                            Url = string.Format(fileCrawler.UrlFormat, urlArgs),
+                            DirectoryName = string.Format("{0}\\{1:yyyyMMdd}", Configuration["Settings:Crawlers.Files.RootDirectory"], sourceTime),
+                            FileName = string.Format(fileCrawler.FileNameFormat, args),
+                            Stamp = string.Format(fileCrawler.StampFormat, args)
+                        };
+                        list.Add(record);
                     }
+                }
+            }
+            return list;
+        }
+
+        public async Task UpdateAsync(FileCrawler fileCrawler, DateTime date)
+        {
+            List<ParameterCombination> parameterCombinations = await ParameterCombinationRepository.GetListAsync(fileCrawler.Id, true);
+            foreach (ParameterCombination parameterCombination in parameterCombinations)
+            {
+                List<FileCrawlerRecord> fileCrawlerRecordList = await FileCrawlerRecordRepository.GetListAsync(parameterCombination.Id, date);
+                List<FileCrawlerRecord> list = CreateFileCrawlerRecordList(fileCrawler, date, parameterCombination);
+                foreach (FileCrawlerRecord record in list)
+                {
+                    FileCrawlerRecord fileCrawlerRecord = fileCrawlerRecordList.FirstOrDefault(x => x.SourceTime == record.SourceTime && x.TargetTime == record.TargetTime);
+                    if (fileCrawlerRecord == null)
+                    {
+                        fileCrawlerRecord = record;
+                        await FileCrawlerRecordRepository.InsertAsync(fileCrawlerRecord);
+                    }
+                    else
+                    {
+                        fileCrawlerRecord.Url = record.Url;
+                        fileCrawlerRecord.FileName = record.FileName;
+                        fileCrawlerRecord.Stamp = record.Stamp;
+                        await FileCrawlerRecordRepository.UpdateAsync(fileCrawlerRecord);
+                    }
+                    await EnqueueAsync(fileCrawlerRecord.Id, fileCrawlerRecord.SourceTime, fileCrawler.DelaySeconds);
                 }
             }
         }

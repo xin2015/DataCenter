@@ -9,6 +9,7 @@ namespace DataCenter.FileCrawlers.ParameterCombinations
 {
     public interface IParameterCombinationRepository : IRepository<ParameterCombination, Guid>
     {
+        Task<List<ParameterCombination>> GetListAsync(Guid fileCrawlerId);
         Task<List<ParameterCombination>> GetListAsync(Guid fileCrawlerId, bool enabled);
     }
 }
