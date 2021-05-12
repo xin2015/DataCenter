@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using DataCenter.FileCrawlers;
+using DataCenter.FileCrawlers.FileCrawlerRecords;
 using Volo.Abp.Guids;
 
 namespace DataCenter
@@ -13,6 +14,7 @@ namespace DataCenter
              * into multiple profile classes for a better organization. */
             CreateMap<FileCrawler, FileCrawlerDto>();
             CreateMap<CreateFileCrawlerDto, FileCrawler>();
+            CreateMap<FileCrawlerRecord, FileCrawlerRecordDto>();
         }
     }
 }

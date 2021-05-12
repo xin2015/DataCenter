@@ -121,7 +121,7 @@ namespace DataCenter.FileCrawlers.ParameterCombinations
                 {
                     periods = fileCrawler.Periods;
                 }
-                ParameterCombination parameterCombination = parameterCombinationList.FirstOrDefault(x => SequenceEqual(x, dic));
+                ParameterCombination parameterCombination = parameterCombinationList.FirstOrDefault(x => Equal(x, dic));
                 if (parameterCombination == null)
                 {
                     parameterCombination = new ParameterCombination(GuidGenerator.Create(), fileCrawler.Id);
@@ -139,10 +139,10 @@ namespace DataCenter.FileCrawlers.ParameterCombinations
             await ParameterCombinationRepository.UpdateManyAsync(parameterCombinationList);
         }
 
-        protected bool SequenceEqual(ParameterCombination parameterCombination, Dictionary<string, string> dic)
+        protected bool Equal(ParameterCombination parameterCombination, Dictionary<string, string> dic)
         {
             Dictionary<string, string> parameters = JsonSerializer.Deserialize<Dictionary<string, string>>(parameterCombination.Parameters);
-            return parameters.SequenceEqual(dic);
+            return parameters.All(x => dic.Contains(x)) && dic.All(x => parameters.Contains(x));
         }
     }
 }

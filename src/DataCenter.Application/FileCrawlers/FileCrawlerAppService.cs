@@ -1,5 +1,6 @@
 ﻿using DataCenter.FileCrawlers.FileCrawlerRecords;
 using DataCenter.FileCrawlers.ParameterCombinations;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +27,8 @@ namespace DataCenter.FileCrawlers
             FileCrawlerRecordDomainService = fileCrawlerRecordDomainService;
         }
 
-        public async Task<List<FileCrawlerDto>> GetListAsync()
+        [Route("api/app/file-crawler/get-list")]
+        public async Task<List<FileCrawlerDto>> GetListAsync(GetFileCrawlerListDto input)
         {
             List<FileCrawler> list = await FileCrawlerRepository.GetListAsync();
             return ObjectMapper.Map<List<FileCrawler>, List<FileCrawlerDto>>(list);

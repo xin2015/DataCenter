@@ -10,6 +10,7 @@ namespace DataCenter.FileCrawlers.FileCrawlerRecords
         [Required]
         [StringLength(DataCenterSharedConsts.MaxCodeLength)]
         public string FileCrawlerCode { get; set; }
-        public Dictionary<string, string> Parameters { get; set; }
+        public string Parameters { get; set; }
+        public DateTime Date { get; set; }
     }
 }

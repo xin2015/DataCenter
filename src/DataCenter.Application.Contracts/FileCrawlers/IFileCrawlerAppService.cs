@@ -8,7 +8,7 @@ namespace DataCenter.FileCrawlers
 {
     public interface IFileCrawlerAppService : IApplicationService
     {
-        Task<List<FileCrawlerDto>> GetListAsync();
+        Task<List<FileCrawlerDto>> GetListAsync(GetFileCrawlerListDto input);
 
         Task<FileCrawlerDto> GetAsync(GetFileCrawlerDto input);
 
