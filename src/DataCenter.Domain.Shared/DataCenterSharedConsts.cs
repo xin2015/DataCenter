@@ -12,7 +12,7 @@ namespace DataCenter
 
         public const int MaxFullNameLength = 256;
 
-        public const int MaxJsonStringLength = 2 * 1024;
+        public const int MaxJsonStringLength = 2048;
 
         public const int MaxFullJsonStringLength = 1024 * 1024;
     }
